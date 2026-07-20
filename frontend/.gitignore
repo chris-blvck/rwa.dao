@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Production / deploy
+.vercel/
+.netlify/
+
+# Test / cache
+coverage/
+*.tsbuildinfo
+
+# Local env (jamais commiter de secrets)
+.env
+.env.*
+!.env.example
+
+# Logs / OS
+*.log
+.DS_Store

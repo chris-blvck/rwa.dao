@@ -1,0 +1,24 @@
+# Netlify deployment (Next.js App Router) — RWA-DAO Creator Portal, Tier 1.
+#
+# IMPORTANT: this file MUST live at the repository ROOT. Netlify only reads
+# netlify.toml from the repo root (or from the base directory configured in the
+# Netlify UI). The app itself lives in the frontend/ subfolder, so we set
+# `base = "frontend"` here to point the build there. Without this root file,
+# Netlify builds the repo root (which has no index.html) and serves its default
+# 404 page.
+#
+# Paths in netlify.toml are resolved relative to `base`, so `publish = ".next"`
+# resolves to frontend/.next.
+#
+# The frontend is mock-only: no secret required for the demo.
+#   - RWA_MODE=canned (default): offline fixtures, no backend needed (ideal preview).
+#   - RWA_MODE=live + RWA_MOCK_API_BASE_URL=...: proxy to the Python mock backend (FastAPI).
+# Set these in Netlify > Site settings > Environment variables.
+
+[build]
+  base = "frontend"
+  command = "next build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

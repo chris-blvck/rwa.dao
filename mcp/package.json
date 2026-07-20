@@ -1,0 +1,20 @@
+{
+  "name": "rwa-dao-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server exposing the RWA-DAO MemoryAgent tools",
+  "scripts": {
+    "start": "tsx server.ts",
+    "smoke": "tsx smoke.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "viem": "^2.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.19.0"
+  }
+}

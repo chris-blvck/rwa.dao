@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light theme (default) */
+:root {
+  --bg: 255 255 255;
+  --bg2: 246 246 246;
+  --bg3: 237 237 237;
+  --fg: 10 10 10;
+  --fgSoft: 58 58 58;
+  --fgMuted: 110 110 110;
+  --line: 230 230 230;
+  --line2: 214 214 214;
+  --tile: 10 10 10; /* dark tile on light page */
+  color-scheme: light;
+}
+
+/* Dark theme */
+.dark {
+  --bg: 8 8 9;
+  --bg2: 20 20 22;
+  --bg3: 30 30 33;
+  --fg: 245 245 247;
+  --fgSoft: 205 205 210;
+  --fgMuted: 150 150 158;
+  --line: 38 38 42;
+  --line2: 52 52 58;
+  --tile: 26 26 29; /* slightly elevated tile so it reads on near-black */
+  color-scheme: dark;
+}
+
+html,
+body {
+  background-color: rgb(var(--bg));
+  color: rgb(var(--fg));
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.eyebrow {
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Subtle film-grain texture for the dark video preview tiles */
+.tile-grain {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.3px);
+  background-size: 6px 6px;
+}
+
+/* Gentle entrance animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-up {
+  animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    animation: none;
+  }
+}

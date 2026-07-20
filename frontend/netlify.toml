@@ -1,0 +1,32 @@
+# Netlify deployment (Next.js App Router) — RWA-DAO Creator Studio.
+# Demo mode works with NO secrets (canned fixtures, localStorage persistence). Optional env
+# unlocks the live paths — see docs/REMAINING.md for the full list:
+#   NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY  → cloud library/ambassador/agent config
+#   SUPABASE_SERVICE_ROLE_KEY + CRON_SECRET                   → autonomous agent queue (scheduler)
+#   ── Alibaba-native (Qwen hackathon) — the QUALIFYING path ──
+#   DASHSCOPE_API_KEY + RWA_LLM_PROVIDER=qwen                 → captions on Qwen (qwen-max)
+#   DASHSCOPE_API_KEY + RWA_VIDEO_PROVIDER=qwen + RWA_ALLOW_LIVE_GENERATION=1 → video on Wan/HappyHorse
+#   (validate with GET /api/rwa/agent/preflight?probe=1)
+#   ── Alternatives (do NOT qualify for the Qwen hackathon) ──
+#   HIGGSFIELD_API_KEY + RWA_VIDEO_PROVIDER=higgsfield (+ RWA_ALLOW_LIVE_GENERATION=1) → aggregator video
+#   ANTHROPIC_API_KEY                                         → LLM captions via Claude
+# Set these in Netlify > Site settings > Environment variables.
+
+[build]
+  command = "next build"
+  publish = ".next"
+  # The frontend lives in a repo subfolder: point the build base here.
+  base = "frontend"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Ambassador short links: /r/CODE → homepage with the referral captured (lib/rwa/referral.ts).
+[[redirects]]
+  from = "/r/:code"
+  to = "/?ref=:code"
+  status = 302
+
+# Scheduled function (netlify/functions/agent-cron.mts) runs the Managed Agent scheduler hourly.
+[functions]
+  directory = "netlify/functions"
