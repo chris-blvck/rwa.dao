@@ -8,6 +8,8 @@ out/
 # Production / deploy
 .vercel/
 .netlify/
+.open-next/
+.wrangler/
 
 # Test / cache
 coverage/

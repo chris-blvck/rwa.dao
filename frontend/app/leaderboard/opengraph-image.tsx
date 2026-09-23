@@ -1,6 +1,6 @@
 import { ogCard, OG_SIZE, OG_CONTENT_TYPE } from "@/components/rwa/og-card";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const alt = "RWA-DAO Leaderboard — the creators driving the most mints";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
