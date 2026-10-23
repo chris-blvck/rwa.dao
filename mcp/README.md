@@ -14,13 +14,19 @@ unit-tested logic the app uses** (`../frontend/lib/rwa/*`) — no reimplementati
 | `draft_caption_prompt` | Build the memory-informed caption prompt the agent sends to Qwen | `llm.buildCaptionPrompt` |
 | `read_conversions` | Read a creator's **real on-chain mints** (the reward signal) for a referral code | `rwa_watch_nft.conversionsForReferral` (live XDC RPC) |
 
+This is an optional local stdio tool, separate from the deployed frontend. Node >=22.12 is required.
+The locked SDK is >=1.32.1; use `npm ci` to retain the reviewed transitive versions.
+
 ## Run
 
 ```bash
-cd mcp
-npm install
+cd frontend
+npm ci           # shared app modules resolve their dependencies from frontend
+cd ../mcp
+npm ci
 npm start        # stdio MCP server (tsx server.ts)
-npm run smoke    # spins up the server + an MCP client, lists tools, exercises rank + reinforce
+npm run typecheck
+npm run smoke    # 4 offline tools + invalid schema rejection; no RPC or provider request
 ```
 
 `read_conversions` makes a live XDC Apothem RPC call; the other four are pure and offline.

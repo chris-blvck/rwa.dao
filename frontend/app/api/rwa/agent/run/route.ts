@@ -1,8 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { DEFAULT_AGENT_CONFIG, runAgentTick } from "@/lib/rwa/agent";
 import { runScheduledAgents, type CaptionWriter } from "@/lib/rwa/agent_scheduler";
-import { teamById } from "@/lib/rwa/teams";
-import { captionProvider, llmCaption } from "@/lib/rwa/llm";
 import { indexNewMints, viemChainReader } from "@/lib/rwa/mint_indexer";
 import { getSupabaseAdmin, indexerDb, memoryProvider, schedulerDb } from "@/lib/rwa/supabase_admin";
 
@@ -33,20 +31,8 @@ async function handle(req: NextRequest) {
       // MemoryAgent on: reinforce each creator's memory from real on-chain outcomes, then rank the
       // next batch by what works. Toggle off with RWA_MEMORY_AGENT=0 for the plain rotation.
       const memory = process.env.RWA_MEMORY_AGENT === "0" ? undefined : memoryProvider(admin);
-      // Reasoning on Qwen (Alibaba Cloud path): when a DashScope/Anthropic key is present, the agent
-      // writes each caption via the LLM, informed by the creator's memory hint. No key → the writer
-      // is omitted and the deterministic template caption stands (safe, zero-cost default).
-      const writeCaption: CaptionWriter | undefined = captionProvider()
-        ? (idea, ctx) =>
-            llmCaption({
-              watchTitle: idea.watchTitle,
-              styleTitle: idea.presetTitle,
-              personaName: idea.personaName,
-              platform: idea.platform,
-              team: teamById(idea.teamId)?.name ?? null,
-              memoryHint: ctx.memoryHint,
-            })
-        : undefined;
+      // Scheduled drafts remain no-cost until an owner-scoped quota reservation is integrated.
+      const writeCaption: CaptionWriter | undefined = undefined;
       const runOpts = { ...(memory ? { memory } : {}), ...(writeCaption ? { writeCaption } : {}) };
       agents = await runScheduledAgents(schedulerDb(admin), new Date(), Object.keys(runOpts).length ? runOpts : undefined);
     } catch (e) {

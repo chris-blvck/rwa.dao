@@ -1,3 +1,4 @@
+import { guardProviderSpend, readProviderBody } from "@/lib/rwa/provider_guard";
 import { NextResponse, type NextRequest } from "next/server";
 import { ASSETS, BACKGROUNDS, PRESETS } from "@/lib/rwa/catalog";
 import { buildComposePrompt } from "@/lib/rwa/compose";
@@ -26,7 +27,9 @@ function resolveOrigin(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as Body;
+  const parsed = await readProviderBody<Body>(req);
+  if ("response" in parsed) return parsed.response;
+  const body = parsed.body;
   const sel = body.selection ?? {};
   const watch = ASSETS.find((a) => a.asset_id === sel.asset_id) ?? ASSETS[0];
   const preset = PRESETS.find((p) => p.preset_id === sel.preset_id) ?? PRESETS[0];
@@ -52,6 +55,8 @@ export async function POST(req: NextRequest) {
   // Makes stage 1 run on Alibaba's own API too (not just stage-2 video) — the fully-native pipeline.
   if (liveAllowed && qwenImageActive()) {
     try {
+      const denied = await guardProviderSpend(req, "compose");
+      if (denied) return denied;
       const taskId = await createImageTask({ prompt, refImageUrl: referenceImageUrl, size: sizeForFormat(format), model: dashscopeImageModel() });
       return NextResponse.json({
         status: "composing",
@@ -79,6 +84,8 @@ export async function POST(req: NextRequest) {
 
   if (liveAllowed && creds) {
     try {
+      const denied = await guardProviderSpend(req, "compose");
+      if (denied) return denied;
       const seed = Number.isFinite(Number(body.seed)) ? Math.floor(Number(body.seed)) : (Date.now() % 1_000_000_000);
       const job = await createImageJob(creds, imageTargetFor(), { prompt, referenceImageUrl, aspectRatio: format, seed });
       // Synchronous providers return the URL inside the request_id sentinel "sync:<url>".

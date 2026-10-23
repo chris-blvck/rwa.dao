@@ -81,10 +81,10 @@ async function handle(req: NextRequest, params: { path: string[] }) {
   }
 }
 
-export async function GET(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx.params);
+export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+  return handle(req, await ctx.params);
 }
 
-export async function POST(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx.params);
+export async function POST(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+  return handle(req, await ctx.params);
 }

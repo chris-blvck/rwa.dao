@@ -13,7 +13,14 @@ import type { Creation } from "./storage";
 export type LibraryMode = "cloud" | "local";
 
 let mode: LibraryMode = "local";
-let uid: string | null = null;
+async function currentOwner(): Promise<string | null> {
+  const sb = getSupabaseBrowser();
+  if (!sb) return null;
+  try {
+    const { data, error } = await sb.auth.getSession();
+    return !error ? data.session?.user?.id ?? null : null;
+  } catch { return null; }
+}
 
 function rowToCreation(r: any): Creation {
   return {
@@ -42,12 +49,10 @@ export async function initLibrary(): Promise<LibraryMode> {
   try {
     const { data: s } = await sb.auth.getSession();
     if (s.session?.user) {
-      uid = s.session.user.id;
       return (mode = "cloud");
     }
     const { data, error } = await sb.auth.signInAnonymously();
     if (error || !data.user) return (mode = "local");
-    uid = data.user.id;
     return (mode = "cloud");
   } catch {
     return (mode = "local");
@@ -60,7 +65,8 @@ export function libraryMode(): LibraryMode {
 
 export async function listLibrary(): Promise<Creation[]> {
   const sb = getSupabaseBrowser();
-  if (mode === "cloud" && sb && uid) {
+  const uid = await currentOwner();
+  if (sb && uid) {
     try {
       const { data, error } = await sb.from("rwa_creations").select("*").order("created_at", { ascending: false });
       if (!error && data) return data.map(rowToCreation);
@@ -73,7 +79,8 @@ export async function listLibrary(): Promise<Creation[]> {
 
 export async function addToLibrary(c: Creation): Promise<Creation[]> {
   const sb = getSupabaseBrowser();
-  if (mode === "cloud" && sb && uid) {
+  const uid = await currentOwner();
+  if (sb && uid) {
     try {
       const { error } = await sb.from("rwa_creations").insert({
         owner: uid,
@@ -98,7 +105,8 @@ export async function addToLibrary(c: Creation): Promise<Creation[]> {
 
 export async function updateInLibrary(id: string, patch: Partial<Creation>): Promise<Creation[]> {
   const sb = getSupabaseBrowser();
-  if (mode === "cloud" && sb && uid) {
+  const uid = await currentOwner();
+  if (sb && uid) {
     try {
       const dbPatch: Record<string, unknown> = {};
       if (patch.videoUrl !== undefined) dbPatch.video_url = patch.videoUrl;
@@ -117,7 +125,8 @@ export async function updateInLibrary(id: string, patch: Partial<Creation>): Pro
 
 export async function removeFromLibrary(id: string): Promise<Creation[]> {
   const sb = getSupabaseBrowser();
-  if (mode === "cloud" && sb && uid) {
+  const uid = await currentOwner();
+  if (sb && uid) {
     try {
       const { error } = await sb.from("rwa_creations").delete().eq("id", id);
       if (!error) return listLibrary();
