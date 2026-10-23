@@ -11,7 +11,8 @@ function assert(cond: unknown, msg: string): void {
   }
 }
 
-const transport = new StdioClientTransport({ command: "npx", args: ["tsx", "server.ts"] });
+// Use the installed loader directly: a smoke test must never fetch a missing executable.
+const transport = new StdioClientTransport({ command: process.execPath, args: ["--import", "tsx", "server.ts"] });
 const client = new Client({ name: "smoke", version: "1.0.0" });
 await client.connect(transport);
 
@@ -37,6 +38,28 @@ const p2 = JSON.parse((r2.content as Array<{ text: string }>)[0].text);
 assert(p2.posts === 1, "reinforce_memory should bump posts to 1");
 assert(typeof p2.summary === "string" && p2.summary.includes("Learned"), "summary reflects learning");
 
-console.error("SMOKE OK — 5 tools, rank + reinforce verified over stdio");
+// Exercise all remaining offline tools; deliberately never call read_conversions (live RPC).
+const r3 = await client.callTool({ name: "memory_summary", arguments: { weights: p2.weights, posts: p2.posts } });
+const p3 = JSON.parse((r3.content as Array<{ text: string }>)[0].text);
+assert(typeof p3.summary === "string", "memory_summary should return text");
+const r4 = await client.callTool({
+  name: "draft_caption_prompt",
+  arguments: { watchTitle: "Test watch", styleTitle: "Editorial", personaName: "Creator", platform: "TikTok" },
+});
+const p4 = JSON.parse((r4.content as Array<{ text: string }>)[0].text);
+assert(typeof p4.prompt === "string" && p4.prompt.includes("Test watch"), "caption prompt should preserve the watch title");
+
+let invalidRejected = false;
+try {
+  const invalid = await client.callTool({ name: "rank_content_batch", arguments: { count: 21 } });
+  invalidRejected = invalid.isError === true;
+} catch {
+  invalidRejected = true;
+}
+assert(invalidRejected, "SDK must reject count beyond the registered schema limit");
+// Prove the session remains usable after rejecting malformed arguments.
+assert((await client.listTools()).tools.length === expected.length, "protocol should survive invalid arguments");
+
+console.error("SMOKE OK — 5 tools listed, 4 offline tools + invalid schema rejection verified over stdio; no RPC called");
 await client.close();
 process.exit(0);
