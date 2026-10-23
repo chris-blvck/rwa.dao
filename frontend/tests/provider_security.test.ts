@@ -31,6 +31,11 @@ describe("paid provider authorization", () => {
     expect((await caption(request({}, true))).status).toBe(401);
     expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.llm).not.toHaveBeenCalled();
   });
+  it("rejects a Supabase anonymous identity even if it presents a real user token", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "anonymous", is_anonymous: true } }, error: null });
+    expect((await caption(request({}, true))).status).toBe(401);
+    expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.llm).not.toHaveBeenCalled();
+  });
   it("requires durable quota before every paid request", async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: { message: "quota_exceeded" } });
     expect((await caption(request({}, true))).status).toBe(429); expect(mocks.llm).not.toHaveBeenCalled();

@@ -6,7 +6,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 // Config-gated: returns a client only when the public env vars are set; otherwise null, and
 // the app keeps using localStorage (lib/rwa/storage.ts). The publishable/anon key is public
 // by design — rows are protected by RLS (owner-scoped). Cloud sync of "My videos" activates
-// once wallet/auth is wired (a human prerequisite); until then localStorage is the store.
+// with a Supabase user session. Creator-account login is separate from the demo wallet.
 
 let cached: SupabaseClient | null | undefined;
 

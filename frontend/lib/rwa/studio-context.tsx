@@ -6,6 +6,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { rwaClient } from "./client";
+import { postProviderRequest, providerFailureMessage } from "./provider_session";
 import {
   ASSETS,
   BACKGROUNDS,
@@ -288,14 +289,12 @@ function useStudioController() {
     const iv = setInterval(() => setProgress((p) => (p < 88 ? p + Math.max(1, Math.round((88 - p) * 0.15)) : p)), 160);
     let frame: string | null = null;
     let mode: "plate" | "live" | null = null;
+    let denied = false;
     try {
-      const res = await fetch("/api/rwa/compose", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selection: chosen, output, seed }),
-      });
+      const res = await postProviderRequest("/api/rwa/compose", { selection: chosen, output, seed });
       const j = await res.json().catch(() => ({}));
-      if (j.status === "composed" && j.image_url) {
+      if (!res.ok) { denied = true; toast(providerFailureMessage(res.status), "err"); }
+      else if (j.status === "composed" && j.image_url) {
         frame = j.image_url;
         mode = j.mode === "live" ? "live" : "plate";
       } else if (j.status === "composing" && j.poll_url) {
@@ -309,6 +308,7 @@ function useStudioController() {
       /* fall back to the render plate below */
     }
     clearInterval(iv);
+    if (denied) { setPhase("idle"); setProgress(0); return; }
     if (!frame) {
       // Never dead-end: fall back to the best reference plate as the frame.
       frame = referenceFor(watch, {
@@ -386,15 +386,11 @@ function useStudioController() {
     let goodTakes: { url: string; requestId: string | null }[] = [];
     let refundXdc = 0; // failed/unrendered takes are refunded — pay only for what was produced
     try {
-      const res = await fetch("/api/rwa/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selection: chosen, output, takes: effTakes, ...(composedFrame ? { start_image_url: composedFrame } : {}) }),
-      });
+      const res = await postProviderRequest("/api/rwa/generate", { selection: chosen, output, takes: effTakes, ...(composedFrame ? { start_image_url: composedFrame } : {}) });
       const plan = await res.json().catch(() => ({}));
       if (!res.ok || (plan.status !== "prepared" && plan.status !== "generating")) {
         ok = false;
-        toast("Something went wrong.", "err");
+        toast(providerFailureMessage(res.status), "err");
       } else if (plan.status === "generating" && (plan.poll_url || plan.jobs?.length)) {
         const jobs: { request_id?: string; poll_url: string }[] =
           Array.isArray(plan.jobs) && plan.jobs.length ? plan.jobs : [{ request_id: plan.request_id, poll_url: plan.poll_url }];
@@ -689,19 +685,16 @@ function useStudioController() {
     if (aiCaptionBusy) return;
     setAiCaptionBusy(true);
     try {
-      const res = await fetch("/api/rwa/agent/caption", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          watchTitle: watch.title,
-          styleTitle: preset.title,
-          personaName: persona.display_name,
-          platform: capPlatform,
-          team: team.id !== "none" ? team.name : null,
-        }),
+      const res = await postProviderRequest("/api/rwa/agent/caption", {
+        watchTitle: watch.title,
+        styleTitle: preset.title,
+        personaName: persona.display_name,
+        platform: capPlatform,
+        team: team.id !== "none" ? team.name : null,
       });
       const j = (await res.json().catch(() => ({}))) as { source?: string; caption?: string | null };
-      if (j.source === "llm" && j.caption) {
+      if (!res.ok) toast(providerFailureMessage(res.status), "err");
+      else if (j.source && j.source !== "disabled" && j.caption) {
         setAiCaption(j.caption);
         toast("AI caption ready ✨");
       } else {

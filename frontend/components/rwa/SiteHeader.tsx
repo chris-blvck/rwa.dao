@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ProviderAccount } from "./ProviderAccount";
 import { Brand } from "@/components/ui/Brand";
 import { DEV_LIVE_MODE_ENABLED, useStudio } from "@/lib/rwa/studio-context";
 
@@ -44,6 +45,7 @@ export function SiteHeader() {
         onDisconnectWallet={s.disconnectWallet}
         connecting={s.busy === "wallet"}
       />
+      <ProviderAccount />
       <nav className="sticky top-[57px] z-10 border-b border-line bg-bg/90 backdrop-blur" aria-label="Primary">
         <div className="relative mx-auto max-w-6xl">
           <div

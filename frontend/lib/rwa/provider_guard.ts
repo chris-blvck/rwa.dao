@@ -18,7 +18,7 @@ export async function guardProviderSpend(req: Request, action: SpendAction, unit
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: identity, error: authError } = await sb.auth.getUser(token);
-    if (authError || !identity.user) return NextResponse.json({ error: "authentication_required" }, { status: 401 });
+    if (authError || !identity.user || identity.user.is_anonymous) return NextResponse.json({ error: "authentication_required" }, { status: 401 });
     const { data, error } = await sb.rpc("rwa_reserve_provider_call", { p_action: action, p_units: units });
     if (error) {
       const denied = error.message?.includes("quota_exceeded");
