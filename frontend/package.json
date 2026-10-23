@@ -5,35 +5,50 @@
   "description": "Portail createur RWA-DAO Palier 1 (frontend Next.js, mock-only) — consomme l'API mock du backend Python.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "cf:build": "opennextjs-cloudflare build",
     "cf:check": "npm run test && npm run typecheck && npm run cf:build && wrangler deploy --dry-run --outdir .wrangler/dry-run",
-    "cf:deploy": "npm run cf:build && wrangler deploy"
+    "cf:deploy": "npm run cf:build && wrangler deploy",
+    "test:css": "node tests/css-compatibility.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
-    "next": "^14.2.35",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "viem": "^2.54.1"
   },
   "devDependencies": {
-    "@types/node": "20.14.10",
-    "@opennextjs/cloudflare": "1.15.0",
-    "@types/react": "18.3.3",
-    "@types/react-dom": "18.3.0",
+    "@types/node": "^22.0.0",
+    "@opennextjs/cloudflare": "1.20.13",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "autoprefixer": "10.4.19",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.35",
-    "postcss": "8.4.39",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "16.4.3",
+    "postcss": "^8.5.31",
     "tailwindcss": "3.4.6",
     "typescript": "5.5.3",
-    "vitest": "^2.1.9",
-    "wrangler": "4.137.0"
+    "vitest": "5.0.5",
+    "wrangler": "4.152.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "overrides": {
+    "@node-minify/core": {
+      "glob": "^10.5.0"
+    },
+    "tailwindcss": {
+      "postcss-selector-parser": "7.1.7",
+      "postcss-nested": {
+        "postcss-selector-parser": "7.1.7"
+      }
+    }
   }
 }

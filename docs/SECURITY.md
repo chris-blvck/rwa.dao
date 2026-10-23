@@ -11,3 +11,8 @@ The security branch has prepared the following controls; no migration or deploym
 - Rollback: disable live flags and revoke the public quota RPC before dropping the new internal schema with the reviewed rollback script. The application then fails closed; do not restore the former anonymous provider or reward-signing handlers.
 
 Validation in this session: frontend account/session regression tests, typecheck/lint and build; PostgreSQL quota tests use only an isolated local database. No provider call, wallet transaction, production migration or deployment was executed.
+
+
+Dependency release — 2026-10-23: Node >=22.12 is required (validated here on Node24.19; Docker now uses Node22). Next16.4.3/React19.3.1 and Vitest5.0.5 replace the vulnerable framework/test stack. Route params are awaited and typecheck generates Next route types before TypeScript. ESLint uses the current flat config; the new React Compiler effect/purity recommendations stay warnings for the existing noncompiled application. Tailwind3 retains its output with a scoped parser7.1.7 override: production CSS hashes were byte-identical before/after and the nested/variant/escaped-selector fixture passed. Both RWA frontend npm audits returned zero vulnerabilities after these changes. These are source/build checks, not a production deployment or credential provisioning.
+
+Cloudflare tooling is pinned to @opennextjs/cloudflare1.20.13 and wrangler4.152.0. A scoped @node-minify/core→glob10.5.x override removes the vulnerable CLI dependency while preserving its minor-version API. Worker bundling and wrangler dry-run are local validations; no upload/deployment was performed.
