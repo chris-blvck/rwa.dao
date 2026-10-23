@@ -1,3 +1,4 @@
+import { guardProviderSpend, readProviderBody } from "@/lib/rwa/provider_guard";
 import { NextResponse, type NextRequest } from "next/server";
 import { ASSETS, BACKGROUNDS, HOOKS, MUSIC, PERSONAS, PRESETS } from "@/lib/rwa/catalog";
 import {
@@ -29,10 +30,8 @@ import type { OutputSettings } from "@/lib/rwa/storage";
 // (HIGGSFIELD_API_KEY="KEY_ID:KEY_SECRET" or HIGGSFIELD_KEY_ID/HIGGSFIELD_KEY_SECRET). Avatar
 // (Marketing Studio) shots additionally need each creator created as an avatar (ms_avatar_id).
 //
-// GO-LIVE PREREQUISITE (see docs/DELIVERY.md): this route is client-initiated, so once live
-// generation is enabled it will create real (credit-burning) jobs for any caller. Before flipping
-// RWA_ALLOW_LIVE_GENERATION=1 on a public URL, put it behind user auth + a per-user rate/credit
-// limit. It is safe by default: with the flag off (the demo) it only returns the prepared plan.
+// Live jobs require a verified Supabase user and an atomic durable quota reservation below.
+// Flags and provider keys alone never authorize spending.
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +55,10 @@ type Body = {
 const MAX_TAKES = 3;
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as Body;
+  const parsed = await readProviderBody<Body>(req);
+  if ("response" in parsed) return parsed.response;
+  const body = parsed.body;
+  if (body.start_image_url && (typeof body.start_image_url !== "string" || body.start_image_url.length > 2048)) return NextResponse.json({ error: "invalid_image_url" }, { status: 400 });
   const sel = body.selection ?? {};
 
   const watch = ASSETS.find((a) => a.asset_id === sel.asset_id) ?? ASSETS[0];
@@ -122,6 +124,8 @@ export async function POST(req: NextRequest) {
   // Runs Alibaba's own API instead of the aggregator — the hackathon-qualifying path.
   if (qwenVideoActive() && process.env.RWA_ALLOW_LIVE_GENERATION === "1" && render.mode === "product" && startImageUrl && isPubliclyFetchable(startImageUrl)) {
     try {
+      const denied = await guardProviderSpend(req, "generate");
+      if (denied) return denied;
       const dsModel = dashscopeVideoModel(model.id, true);
       const taskId = await createVideoTask({ prompt: render.prompt, imageUrl: startImageUrl, model: dsModel, resolution: output.resolution });
       return NextResponse.json({
@@ -150,6 +154,8 @@ export async function POST(req: NextRequest) {
   if (canRun && render.mode === "product" && startImageUrl) {
     const creds = readHiggsfieldCreds();
     if (creds) {
+      const denied = await guardProviderSpend(req, "generate", takes);
+      if (denied) return denied;
       const target = i2vTargetFor(model.id); // resolved id, so Auto's fast picks map to dop-turbo
       const seedBase = Date.now() % 1_000_000_000;
       const jobs: { request_id: string; poll_url: string; seed: number }[] = [];
@@ -205,6 +211,8 @@ export async function POST(req: NextRequest) {
     const creds = readHiggsfieldCreds();
     if (ep && creds) {
       try {
+        const denied = await guardProviderSpend(req, "generate");
+        if (denied) return denied;
         const job = await createMarketingStudioVideo(creds, ep, {
           prompt: render.prompt,
           avatarId: render.avatar_id,

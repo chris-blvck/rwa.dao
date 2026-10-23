@@ -96,3 +96,5 @@ Full matrix in [`docs/DEPLOY_ALIBABA.md`](docs/DEPLOY_ALIBABA.md).
 ---
 
 _Demo/creative content is for information only — not financial advice._
+
+Security rollout prerequisites and rollback: [docs/SECURITY.md](docs/SECURITY.md).
